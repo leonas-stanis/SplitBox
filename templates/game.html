@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+{% block title %}{{ game.name }} — SplitBox{% endblock %}
+
+{% block content %}
+<section class="section">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="{{ url_for('dashboard') }}">Library</a>
+    <span aria-hidden="true">/</span>
+    <span>{{ game.name }}</span>
+  </nav>
+
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">{{ game.platform or "Game" }}</span>
+      <h1>{{ game.name }}</h1>
+      <p class="text-dim">
+        {{ game.categories|length }} {{ "category" if game.categories|length == 1 else "categories" }}
+        in this game. Open a category to edit its split route.
+      </p>
+    </div>
+    <div class="page-head-actions">
+      <a class="btn btn-ghost" href="{{ url_for('dashboard') }}">Back to library</a>
+    </div>
+  </header>
+
+  <details class="panel-form">
+    <summary class="btn btn-ghost">Edit game details</summary>
+    <form action="{{ url_for('update_game', game_id=game.id) }}" method="post">
+      <div class="form-grid">
+        <div class="field">
+          <label for="edit-game-name">Game name</label>
+          <input id="edit-game-name" name="name" value="{{ game.name }}" maxlength="80" required>
+        </div>
+        <div class="field">
+          <label for="edit-game-platform">Platform</label>
+          <input id="edit-game-platform" name="platform" value="{{ game.platform }}" maxlength="60">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Save changes</button>
+      </div>
+    </form>
+    <form action="{{ url_for('delete_game', game_id=game.id) }}" method="post"
+          data-confirm="Delete {{ game.name }}? Its categories, splits and runs will be removed too.">
+      <div class="form-actions">
+        <button class="btn btn-danger" type="submit">Delete game</button>
+      </div>
+    </form>
+  </details>
+
+  {% if game.categories %}
+    <div class="category-list">
+      {% for category in game.categories %}
+        <article class="category-row">
+          <div class="category-main">
+            <h3><a href="/categories/{{ category.id }}">{{ category.name }}</a></h3>
+            <p>
+              {{ category.splits|length }} {{ "split" if category.splits|length == 1 else "splits" }}
+              ·
+              {% if category.personal_best %}
+                PB {{ category.personal_best.total_ms|clock }}
+              {% else %}
+                No PB
+              {% endif %}
+              · {{ category.runs|length }} {{ "run" if category.runs|length == 1 else "runs" }}
+            </p>
+          </div>
+          <div class="card-actions">
+            <a class="btn btn-primary btn-sm" href="/categories/{{ category.id }}">Open splits →</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state" style="margin-top: 2rem">
+      <h2>No categories yet</h2>
+      <p>Categories are the next step: they hold the split route and timer for this game.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

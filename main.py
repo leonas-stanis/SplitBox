@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import FastAPI, Form, Request
+from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -67,6 +67,30 @@ def page(
     return templates.TemplateResponse(
         request, template, context, status_code=status_code
     )
+
+
+def game_summary(game: models.Game) -> dict:
+    best_ms = None
+    for category in game.categories:
+        best_run = category.personal_best
+        if best_run is not None:
+            best_ms = (
+                best_run.total_ms
+                if best_ms is None
+                else min(best_ms, best_run.total_ms)
+            )
+    return {
+        "game": game,
+        "category_count": len(game.categories),
+        "best_ms": best_ms,
+    }
+
+
+def owned_game(db: SessionDep, user: models.User, game_id: int) -> models.Game:
+    game = db.get(models.Game, game_id)
+    if game is None or game.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return game
 
 
 def registration_error(
@@ -204,8 +228,91 @@ def logout(request: Request):
 
 
 @app.get("/dashboard", name="dashboard")
-def dashboard(request: Request, user: PageUser):
-    return page(request, "dashboard.html", user=user)
+def dashboard(request: Request, db: SessionDep, user: PageUser):
+    games = db.scalars(
+        select(models.Game)
+        .where(models.Game.user_id == user.id)
+        .order_by(models.Game.created_at)
+    ).all()
+    return page(
+        request,
+        "dashboard.html",
+        user=user,
+        game_cards=[game_summary(game) for game in games],
+    )
+
+
+@app.post("/games", name="create_game")
+def create_game(
+    request: Request,
+    db: SessionDep,
+    user: PageUser,
+    name: Annotated[str, Form()] = "",
+    platform: Annotated[str, Form()] = "",
+):
+    name = name.strip()
+    if not name or len(name) > 80:
+        flash(request, "Give the game a name (up to 80 characters).", "error")
+        return RedirectResponse("/dashboard", status_code=303)
+
+    game = models.Game(
+        user_id=user.id,
+        name=name,
+        platform=platform.strip()[:60],
+    )
+    db.add(game)
+    db.commit()
+    db.refresh(game)
+    flash(request, f"{game.name} added. Now create a category.", "success")
+    return RedirectResponse(f"/games/{game.id}", status_code=303)
+
+
+@app.get("/games/{game_id}", name="game_page")
+def game_page(
+    request: Request,
+    game_id: int,
+    db: SessionDep,
+    user: PageUser,
+):
+    game = owned_game(db, user, game_id)
+    return page(request, "game.html", user=user, game=game)
+
+
+@app.post("/games/{game_id}/update", name="update_game")
+def update_game(
+    request: Request,
+    game_id: int,
+    db: SessionDep,
+    user: PageUser,
+    name: Annotated[str, Form()] = "",
+    platform: Annotated[str, Form()] = "",
+):
+    game = owned_game(db, user, game_id)
+    name = name.strip()
+    if not name or len(name) > 80:
+        flash(request, "Give the game a name (up to 80 characters).", "error")
+        return RedirectResponse(f"/games/{game.id}", status_code=303)
+
+    game.name = name
+    game.platform = platform.strip()[:60]
+    db.commit()
+    flash(request, "Game details updated.", "success")
+    return RedirectResponse(f"/games/{game.id}", status_code=303)
+
+
+@app.post("/games/{game_id}/delete", name="delete_game")
+def delete_game(
+    request: Request,
+    game_id: int,
+    db: SessionDep,
+    user: PageUser,
+):
+    game = owned_game(db, user, game_id)
+    name = game.name
+    db.delete(game)
+    db.commit()
+    flash(request, f"{name} deleted.", "success")
+    return RedirectResponse("/dashboard", status_code=303)
 
 
 @app.exception_handler(AuthRequired)

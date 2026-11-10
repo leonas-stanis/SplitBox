@@ -9,11 +9,56 @@
       <h1>Welcome back, {{ current_user.username }}.</h1>
       <p class="text-dim">Every game, category and split lives here first.</p>
     </div>
+    <div class="page-head-actions">
+      <a class="btn btn-ghost" href="#game-form">Add a game</a>
+    </div>
   </header>
 
-  <div class="empty-state" style="margin-top: 2rem">
-    <h2>No games yet</h2>
-    <p>The game library is the next piece to land.</p>
-  </div>
+  <details class="panel-form" id="game-form" {% if not game_cards %}open{% endif %}>
+    <summary class="btn btn-primary">+ Add game</summary>
+    <form action="{{ url_for('create_game') }}" method="post">
+      <div class="form-grid">
+        <div class="field">
+          <label for="game-name">Game name</label>
+          <input id="game-name" name="name" maxlength="80" placeholder="Celeste" required>
+        </div>
+        <div class="field">
+          <label for="game-platform">Platform <span class="muted">(optional)</span></label>
+          <input id="game-platform" name="platform" maxlength="60" placeholder="PC, Switch, PS5…">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Add game</button>
+        <span class="muted">The next step is adding a category.</span>
+      </div>
+    </form>
+  </details>
+
+  {% if game_cards %}
+    <div class="game-grid">
+      {% for item in game_cards %}
+        <a class="game-card" href="{{ url_for('game_page', game_id=item.game.id) }}">
+          <div class="game-card-top">
+            <span class="game-tag">{{ item.game.platform or "No platform" }}</span>
+            <span class="muted">{{ item.category_count }} {{ "category" if item.category_count == 1 else "categories" }}</span>
+          </div>
+          <h3>{{ item.game.name }}</h3>
+          <p class="muted">
+            {% if item.best_ms is not none %}
+              Best {{ item.best_ms|clock }}
+            {% else %}
+              No completed runs yet
+            {% endif %}
+          </p>
+          <span class="game-card-open">Open game →</span>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state" style="margin-top: 2rem">
+      <h2>No games yet</h2>
+      <p>Add the first game in your library, then open its page to build categories and splits.</p>
+    </div>
+  {% endif %}
 </section>
 {% endblock %}
