@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block title %}Library — SplitBox{% endblock %}
+
+{% block content %}
+<section class="section">
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">Your library</span>
+      <h1>Welcome back, {{ current_user.username }}.</h1>
+      <p class="text-dim">Every game, category and split lives here first.</p>
+    </div>
+  </header>
+
+  <div class="empty-state" style="margin-top: 2rem">
+    <h2>No games yet</h2>
+    <p>The game library is the next piece to land.</p>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block title %}Sign in — SplitBox{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="auth-grid">
+    {% include "partials/_auth_aside.html" %}
+
+    <div class="auth-card">
+      <h2>Welcome back</h2>
+      <p class="text-dim">Sign in to open your split library.</p>
+
+      <form class="form" action="/login" method="post" novalidate>
+        <div class="field">
+          <label for="login-identifier">Username or email</label>
+          <input id="login-identifier" name="identifier" value="{{ form.identifier if form else '' }}"
+                 autocomplete="username" required autofocus>
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        {% if error %}
+          <p class="form-error" role="alert">{{ error }}</p>
+        {% endif %}
+        <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+      </form>
+
+      <p class="auth-switch">New to SplitBox? <a href="/register">Create an account</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}
