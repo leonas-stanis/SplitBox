@@ -116,5 +116,40 @@
       <p>Add the first split with the form above. The timer follows this order.</p>
     </div>
   {% endif %}
+  <section class="history-section">
+    <div class="subhead">
+      <h2>Run history</h2>
+      <span class="muted">{{ run_rows|length }} completed {{ "run" if run_rows|length == 1 else "runs" }}</span>
+    </div>
+    {% if run_rows %}
+      <div class="run-list">
+        {% for item in run_rows %}
+          <article class="run-row">
+            <div class="run-main">
+              <strong class="run-time">{{ item.run.total_ms|clock }}</strong>
+              <span class="run-date">{{ item.run.started_at|date }}</span>
+            </div>
+            <div class="run-meta">
+              {% if item.is_best %}
+                <span class="pb-badge">PB</span>
+              {% else %}
+                <span class="run-delta {{ 'ahead' if item.delta < 0 else 'behind' }}">{{ item.delta|delta }}</span>
+              {% endif %}
+              <span class="muted">{{ item.run.splits|length }} splits</span>
+              <form class="inline-form" action="{{ url_for('delete_run_page', run_id=item.run.id) }}" method="post"
+                    data-confirm="Delete this run from the history?">
+                <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+              </form>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state compact">
+        <p>No completed runs yet. Finish a route in the timer to record one.</p>
+        <p><a class="btn btn-primary btn-sm" href="{{ url_for('timer_page', category_id=category.id) }}">Open timer</a></p>
+      </div>
+    {% endif %}
+  </section>
 </section>
 {% endblock %}

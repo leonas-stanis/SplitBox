@@ -401,12 +401,27 @@ def category_page(
     user: PageUser,
 ):
     category = owned_category(db, user, category_id)
+    personal_best = category.personal_best
+    runs = sorted(category.runs, key=lambda run: run.started_at, reverse=True)
+    run_rows = [
+        {
+            "run": run,
+            "is_best": personal_best is not None and run.id == personal_best.id,
+            "delta": (
+                run.total_ms - personal_best.total_ms
+                if personal_best is not None
+                else 0
+            ),
+        }
+        for run in runs
+    ]
     return page(
         request,
         "category.html",
         user=user,
         category=category,
         comparison=comparison_for(category),
+        run_rows=run_rows,
     )
 
 
@@ -553,6 +568,23 @@ def delete_split(
 
     db.commit()
     flash(request, f"{name} removed from the route.", "success")
+    return RedirectResponse(f"/categories/{category_id}", status_code=303)
+
+
+@app.post("/runs/{run_id}/delete", name="delete_run_page")
+def delete_run_page(
+    request: Request,
+    run_id: int,
+    db: SessionDep,
+    user: PageUser,
+):
+    run = db.get(models.Run, run_id)
+    if run is None or run.category.game.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Run not found")
+    category_id = run.category_id
+    db.delete(run)
+    db.commit()
+    flash(request, "Run deleted from the history.", "success")
     return RedirectResponse(f"/categories/{category_id}", status_code=303)
 
 
