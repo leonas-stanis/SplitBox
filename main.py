@@ -93,6 +93,15 @@ def owned_game(db: SessionDep, user: models.User, game_id: int) -> models.Game:
     return game
 
 
+def owned_category(
+    db: SessionDep, user: models.User, category_id: int
+) -> models.Category:
+    category = db.get(models.Category, category_id)
+    if category is None or category.game.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return category
+
+
 def registration_error(
     db: SessionDep, username: str, email: str, password: str, confirm: str
 ) -> str | None:
@@ -313,6 +322,75 @@ def delete_game(
     db.commit()
     flash(request, f"{name} deleted.", "success")
     return RedirectResponse("/dashboard", status_code=303)
+
+
+@app.post("/games/{game_id}/categories", name="create_category")
+def create_category(
+    request: Request,
+    game_id: int,
+    db: SessionDep,
+    user: PageUser,
+    name: Annotated[str, Form()] = "",
+):
+    game = owned_game(db, user, game_id)
+    name = name.strip()
+    if not name or len(name) > 80:
+        flash(request, "Give the category a name (up to 80 characters).", "error")
+        return RedirectResponse(f"/games/{game.id}", status_code=303)
+
+    category = models.Category(game_id=game.id, name=name)
+    db.add(category)
+    db.commit()
+    db.refresh(category)
+    flash(request, f"{category.name} added. Build its split route.", "success")
+    return RedirectResponse(f"/categories/{category.id}", status_code=303)
+
+
+@app.get("/categories/{category_id}", name="category_page")
+def category_page(
+    request: Request,
+    category_id: int,
+    db: SessionDep,
+    user: PageUser,
+):
+    category = owned_category(db, user, category_id)
+    return page(request, "category.html", user=user, category=category)
+
+
+@app.post("/categories/{category_id}/update", name="update_category")
+def update_category(
+    request: Request,
+    category_id: int,
+    db: SessionDep,
+    user: PageUser,
+    name: Annotated[str, Form()] = "",
+):
+    category = owned_category(db, user, category_id)
+    name = name.strip()
+    if not name or len(name) > 80:
+        flash(request, "Give the category a name (up to 80 characters).", "error")
+        return RedirectResponse(f"/categories/{category.id}", status_code=303)
+
+    category.name = name
+    db.commit()
+    flash(request, "Category renamed.", "success")
+    return RedirectResponse(f"/categories/{category.id}", status_code=303)
+
+
+@app.post("/categories/{category_id}/delete", name="delete_category")
+def delete_category(
+    request: Request,
+    category_id: int,
+    db: SessionDep,
+    user: PageUser,
+):
+    category = owned_category(db, user, category_id)
+    game_id = category.game_id
+    name = category.name
+    db.delete(category)
+    db.commit()
+    flash(request, f"{name} deleted.", "success")
+    return RedirectResponse(f"/games/{game_id}", status_code=303)
 
 
 @app.exception_handler(AuthRequired)

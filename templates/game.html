@@ -48,6 +48,18 @@
     </form>
   </details>
 
+  <div class="panel-form">
+    <h2>Add a category</h2>
+    <p class="muted">A category holds one split route and its timer.</p>
+    <form action="{{ url_for('create_category', game_id=game.id) }}" method="post" class="form-row">
+      <div class="field">
+        <label for="category-name">Category name</label>
+        <input id="category-name" name="name" maxlength="80" placeholder="Any%, 100%, Glitchless…" required>
+      </div>
+      <button class="btn btn-primary" type="submit">Add category</button>
+    </form>
+  </div>
+
   {% if game.categories %}
     <div class="category-list">
       {% for category in game.categories %}

@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+{% block title %}{{ category.name }} — {{ category.game.name }} — SplitBox{% endblock %}
+
+{% block content %}
+<section class="section">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="{{ url_for('dashboard') }}">Library</a>
+    <span aria-hidden="true">/</span>
+    <a href="{{ url_for('game_page', game_id=category.game.id) }}">{{ category.game.name }}</a>
+    <span aria-hidden="true">/</span>
+    <span>{{ category.name }}</span>
+  </nav>
+
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">{{ category.game.name }}</span>
+      <h1>{{ category.name }}</h1>
+      <p class="text-dim">Build the split route for this category.</p>
+    </div>
+    <div class="page-head-actions">
+      <a class="btn btn-ghost" href="{{ url_for('game_page', game_id=category.game.id) }}">Back to game</a>
+    </div>
+  </header>
+
+  <details class="panel-form">
+    <summary class="btn btn-ghost">Category settings</summary>
+    <form action="{{ url_for('update_category', category_id=category.id) }}" method="post">
+      <div class="field">
+        <label for="edit-category-name">Category name</label>
+        <input id="edit-category-name" name="name" value="{{ category.name }}" maxlength="80" required>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Save name</button>
+      </div>
+    </form>
+    <form action="{{ url_for('delete_category', category_id=category.id) }}" method="post"
+          data-confirm="Delete {{ category.name }}? Its splits and runs will be removed too.">
+      <div class="form-actions">
+        <button class="btn btn-danger" type="submit">Delete category</button>
+      </div>
+    </form>
+  </details>
+
+  <div class="stat-row">
+    <span class="stat"><strong>{{ category.splits|length }}</strong> splits</span>
+    <span class="stat"><strong>{{ category.personal_best.total_ms|clock if category.personal_best else "—" }}</strong> PB</span>
+    <span class="stat"><strong>{{ category.runs|length }}</strong> runs</span>
+  </div>
+
+  <div class="empty-state" style="margin-top: 2rem">
+    <h2>No splits yet</h2>
+    <p>The split editor is the next piece. This page will hold the ordered route and the timer launch button.</p>
+  </div>
+</section>
+{% endblock %}
