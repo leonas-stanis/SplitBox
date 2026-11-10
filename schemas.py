@@ -26,3 +26,5 @@ class RunSaved(BaseModel):
     total_ms: int
     is_pb: bool
     previous_pb_ms: int | None = None
+    comparison: dict | None = None
+    best_segments: dict[str, int] = Field(default_factory=dict)

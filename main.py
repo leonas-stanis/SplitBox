@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi import FastAPI, Form, HTTPException, Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -13,11 +13,12 @@ from sqlalchemy.exc import IntegrityError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
-from auth import AuthRequired, CurrentUser, PageUser, SessionDep
+from auth import ApiUser, AuthRequired, CurrentUser, PageUser, SessionDep
 from database import Base, engine
 from formatters import format_clock, format_date, format_delta, parse_time_input
 from security import get_secret_key, hash_password, verify_password
 import models
+import schemas
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -134,6 +135,18 @@ def comparison_for(category: models.Category) -> dict | None:
         }
 
     return None
+
+
+def best_segments_for(category: models.Category) -> dict[str, int]:
+    best: dict[str, int] = {}
+    for run in category.runs:
+        for run_split in run.splits:
+            if run_split.split_id is None:
+                continue
+            key = str(run_split.split_id)
+            if key not in best or run_split.segment_ms < best[key]:
+                best[key] = run_split.segment_ms
+    return best
 
 
 def registration_error(
@@ -541,6 +554,96 @@ def delete_split(
     db.commit()
     flash(request, f"{name} removed from the route.", "success")
     return RedirectResponse(f"/categories/{category_id}", status_code=303)
+
+
+@app.get("/categories/{category_id}/timer", name="timer_page")
+def timer_page(
+    request: Request,
+    category_id: int,
+    db: SessionDep,
+    user: PageUser,
+):
+    category = owned_category(db, user, category_id)
+    if not category.splits:
+        flash(request, "Add at least one split before starting the timer.", "error")
+        return RedirectResponse(f"/categories/{category.id}", status_code=303)
+
+    timer_data = {
+        "category_id": category.id,
+        "category_name": category.name,
+        "game_id": category.game.id,
+        "game_name": category.game.name,
+        "splits": [
+            {"id": split.id, "name": split.name, "target_ms": split.target_ms}
+            for split in category.splits
+        ],
+        "comparison": comparison_for(category),
+        "best_segments": best_segments_for(category),
+    }
+    return page(
+        request,
+        "timer.html",
+        user=user,
+        category=category,
+        timer_data=timer_data,
+    )
+
+
+@app.post("/api/runs", name="save_run", response_model=schemas.RunSaved)
+def save_run(payload: schemas.RunCreate, db: SessionDep, user: ApiUser):
+    category = owned_category(db, user, payload.category_id)
+    valid_split_ids = {split.id for split in category.splits}
+    if not payload.splits or any(
+        item.split_id not in valid_split_ids for item in payload.splits
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="The run does not match this category's split route.",
+        )
+
+    previous_best = category.personal_best
+    run = models.Run(
+        category_id=category.id,
+        started_at=payload.started_at,
+        finished_at=payload.finished_at,
+        total_ms=payload.total_ms,
+    )
+    for item in payload.splits:
+        run.splits.append(
+            models.RunSplit(
+                split_id=item.split_id,
+                name=item.name,
+                position=item.position,
+                segment_ms=item.segment_ms,
+                cumulative_ms=item.cumulative_ms,
+            )
+        )
+
+    db.add(run)
+    db.commit()
+    db.refresh(run)
+
+    is_pb = previous_best is None or run.total_ms < previous_best.total_ms
+    db.expire(category, ["runs"])
+
+    return schemas.RunSaved(
+        run_id=run.id,
+        total_ms=run.total_ms,
+        is_pb=is_pb,
+        previous_pb_ms=previous_best.total_ms if previous_best is not None else None,
+        comparison=comparison_for(category),
+        best_segments=best_segments_for(category),
+    )
+
+
+@app.delete("/api/runs/{run_id}", name="delete_run_api", status_code=204)
+def delete_run_api(run_id: int, db: SessionDep, user: ApiUser):
+    run = db.get(models.Run, run_id)
+    if run is None or run.category.game.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Run not found")
+    db.delete(run)
+    db.commit()
+    return Response(status_code=204)
 
 
 @app.exception_handler(AuthRequired)

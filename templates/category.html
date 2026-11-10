@@ -19,6 +19,7 @@
     </div>
     <div class="page-head-actions">
       <a class="btn btn-ghost" href="{{ url_for('game_page', game_id=category.game.id) }}">Back to game</a>
+      <a class="btn btn-primary" href="{{ url_for('timer_page', category_id=category.id) }}">Open timer</a>
     </div>
   </header>
 

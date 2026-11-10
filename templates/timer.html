@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+{% block title %}{{ category.name }} timer — SplitBox{% endblock %}
+
+{% block content %}
+<section class="section">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="{{ url_for('dashboard') }}">Library</a>
+    <span aria-hidden="true">/</span>
+    <a href="{{ url_for('game_page', game_id=category.game.id) }}">{{ category.game.name }}</a>
+    <span aria-hidden="true">/</span>
+    <a href="{{ url_for('category_page', category_id=category.id) }}">{{ category.name }}</a>
+    <span aria-hidden="true">/</span>
+    <span>Timer</span>
+  </nav>
+
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">{{ category.game.name }}</span>
+      <h1>{{ category.name }}</h1>
+      <p class="text-dim">Press start, then split on every checkpoint. Completed runs are saved automatically.</p>
+    </div>
+    <div class="page-head-actions">
+      <a class="btn btn-ghost" href="{{ url_for('category_page', category_id=category.id) }}">Edit splits</a>
+    </div>
+  </header>
+
+  <noscript>
+    <div class="empty-state" style="margin-top: 2rem">
+      <h2>JavaScript required</h2>
+      <p>The timer needs JavaScript to track splits in real time.</p>
+    </div>
+  </noscript>
+
+  <div class="timer-stage">
+    <div class="timer-main" data-state="idle">
+      <div class="timer-status">
+        <span class="status-pill"><span class="status-dot"></span><span data-status aria-live="polite">Ready</span></span>
+        <span data-comparison></span>
+      </div>
+      <div class="timer-clock" data-clock role="timer" aria-label="Elapsed time">00:00.000</div>
+      <div class="timer-current">
+        <span class="timer-split-label" data-current-name></span>
+        <span class="timer-delta" data-delta>—</span>
+      </div>
+      <div class="timer-buttons">
+        <button class="btn btn-primary btn-lg" type="button" data-primary>Start</button>
+        <button class="btn btn-ghost" type="button" data-undo disabled>Undo</button>
+        <button class="btn btn-ghost" type="button" data-reset>Reset</button>
+      </div>
+      <p class="timer-help">
+        <kbd>Space</kbd> start / split
+        <kbd>Backspace</kbd> undo
+        <kbd>R</kbd> reset
+      </p>
+    </div>
+
+    <aside class="timer-side">
+      <div class="timer-side-head">
+        <h2>Split route</h2>
+        <span>{{ category.splits|length }} {{ "split" if category.splits|length == 1 else "splits" }}</span>
+      </div>
+      <ol class="timer-splits" data-split-list></ol>
+      <div class="timer-summary" data-summary hidden></div>
+    </aside>
+  </div>
+</section>
+
+<script id="timer-data" type="application/json">{{ timer_data|tojson }}</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', path='js/timer.js') }}" defer></script>
+{% endblock %}
