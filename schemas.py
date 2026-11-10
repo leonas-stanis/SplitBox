@@ -1,46 +1,28 @@
 from __future__ import annotations
-from pydantic import BaseModel, ConfigDict, Field, EmailStr
+
 from datetime import datetime
 
-
-class ReadingBase(BaseModel):
-    sensor: str = Field(min_length=1, max_length=20)
-    content: float
+from pydantic import BaseModel, Field
 
 
-class ReadingCreate(ReadingBase):
-    user_id: int #Temporary
+class RunSplitIn(BaseModel):
+    split_id: int | None = None
+    name: str = Field(min_length=1, max_length=80)
+    position: int = Field(ge=0)
+    segment_ms: int = Field(ge=0)
+    cumulative_ms: int = Field(ge=0)
 
 
-class ReadingUpdate(BaseModel):
-    sensor: str | None = Field(default=None, min_length=1, max_length=20)
-    content: float | None = Field(default=None)
+class RunCreate(BaseModel):
+    category_id: int
+    started_at: datetime
+    finished_at: datetime
+    total_ms: int = Field(ge=0)
+    splits: list[RunSplitIn] = Field(min_length=1)
 
 
-class UserBase(BaseModel):
-    username:str = Field(min_length=3, max_length=20)
-    email: EmailStr = Field(max_length=320)
-
-
-class UserCreate(UserBase):
-    pass 
-
-class UserResponse(UserBase):
-    model_config = ConfigDict(from_attributes=True)
-    id: int
-    image_file: str | None
-    image_path: str
-
-
-class UserUpdate(BaseModel):
-    username: str | None = Field(default=None, min_length=3, max_length=20)
-    email: EmailStr | None = Field(default=None, max_length=320)
-    image_file: str | None = Field(default=None, max_length=200)
-
-
-class ReadingResponse(ReadingBase):
-    model_config = ConfigDict(from_attributes=True)
-    id: int
-    user_id: int
-    date_timestamp: datetime
-    author: UserResponse
+class RunSaved(BaseModel):
+    run_id: int
+    total_ms: int
+    is_pb: bool
+    previous_pb_ms: int | None = None
