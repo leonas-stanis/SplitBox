@@ -25,6 +25,16 @@ document.querySelectorAll(".flash").forEach((node) => {
   }, 5200);
 });
 
+document.addEventListener("click", (event) => {
+  const opener = event.target.closest("[data-open-details]");
+  if (!opener) return;
+  const details = document.getElementById(opener.dataset.openDetails);
+  if (!details) return;
+  details.open = true;
+  details.scrollIntoView({ behavior: "smooth", block: "start" });
+  details.querySelector("input")?.focus({ preventScroll: true });
+});
+
 document.addEventListener("submit", (event) => {
   const message = event.target.dataset.confirm;
   if (message && !window.confirm(message)) {
