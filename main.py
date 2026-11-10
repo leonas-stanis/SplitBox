@@ -15,7 +15,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from auth import AuthRequired, CurrentUser, PageUser, SessionDep
 from database import Base, engine
-from formatters import format_clock, format_date, format_delta
+from formatters import format_clock, format_date, format_delta, parse_time_input
 from security import get_secret_key, hash_password, verify_password
 import models
 
@@ -100,6 +100,40 @@ def owned_category(
     if category is None or category.game.user_id != user.id:
         raise HTTPException(status_code=404, detail="Category not found")
     return category
+
+
+def owned_split(db: SessionDep, user: models.User, split_id: int) -> models.Split:
+    split = db.get(models.Split, split_id)
+    if split is None or split.category.game.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Split not found")
+    return split
+
+
+def comparison_for(category: models.Category) -> dict | None:
+    personal_best = category.personal_best
+    if personal_best is not None:
+        return {
+            "kind": "pb",
+            "label": "PB",
+            "total_ms": personal_best.total_ms,
+            "splits": {
+                str(run_split.split_id): run_split.cumulative_ms
+                for run_split in personal_best.splits
+                if run_split.split_id is not None
+            },
+        }
+
+    targeted = [split for split in category.splits if split.target_ms is not None]
+    if targeted:
+        last = category.splits[-1] if category.splits else None
+        return {
+            "kind": "target",
+            "label": "Target",
+            "total_ms": last.target_ms if last and last.target_ms is not None else None,
+            "splits": {str(split.id): split.target_ms for split in targeted},
+        }
+
+    return None
 
 
 def registration_error(
@@ -354,7 +388,13 @@ def category_page(
     user: PageUser,
 ):
     category = owned_category(db, user, category_id)
-    return page(request, "category.html", user=user, category=category)
+    return page(
+        request,
+        "category.html",
+        user=user,
+        category=category,
+        comparison=comparison_for(category),
+    )
 
 
 @app.post("/categories/{category_id}/update", name="update_category")
@@ -391,6 +431,116 @@ def delete_category(
     db.commit()
     flash(request, f"{name} deleted.", "success")
     return RedirectResponse(f"/games/{game_id}", status_code=303)
+
+
+@app.post("/categories/{category_id}/splits", name="create_split")
+def create_split(
+    request: Request,
+    category_id: int,
+    db: SessionDep,
+    user: PageUser,
+    name: Annotated[str, Form()] = "",
+    target: Annotated[str, Form()] = "",
+):
+    category = owned_category(db, user, category_id)
+    name = name.strip()
+    if not name or len(name) > 80:
+        flash(request, "Give the split a name (up to 80 characters).", "error")
+        return RedirectResponse(f"/categories/{category.id}", status_code=303)
+
+    target_text = target.strip()
+    target_ms = parse_time_input(target_text) if target_text else None
+    if target_text and target_ms is None:
+        flash(request, "Use a target like 01:42.018 or 1:02:03.500.", "error")
+        return RedirectResponse(f"/categories/{category.id}", status_code=303)
+
+    split = models.Split(
+        category_id=category.id,
+        name=name,
+        target_ms=target_ms,
+        position=len(category.splits),
+    )
+    db.add(split)
+    db.commit()
+    flash(request, f"{split.name} added to the route.", "success")
+    return RedirectResponse(f"/categories/{category.id}", status_code=303)
+
+
+@app.post("/splits/{split_id}/update", name="update_split")
+def update_split(
+    request: Request,
+    split_id: int,
+    db: SessionDep,
+    user: PageUser,
+    name: Annotated[str, Form()] = "",
+    target: Annotated[str, Form()] = "",
+):
+    split = owned_split(db, user, split_id)
+    name = name.strip()
+    if not name or len(name) > 80:
+        flash(request, "Give the split a name (up to 80 characters).", "error")
+        return RedirectResponse(f"/categories/{split.category_id}", status_code=303)
+
+    target_text = target.strip()
+    target_ms = parse_time_input(target_text) if target_text else None
+    if target_text and target_ms is None:
+        flash(request, "Use a target like 01:42.018 or 1:02:03.500.", "error")
+        return RedirectResponse(f"/categories/{split.category_id}", status_code=303)
+
+    split.name = name
+    split.target_ms = target_ms
+    db.commit()
+    flash(request, "Split updated.", "success")
+    return RedirectResponse(f"/categories/{split.category_id}", status_code=303)
+
+
+@app.post("/splits/{split_id}/move", name="move_split")
+def move_split(
+    request: Request,
+    split_id: int,
+    db: SessionDep,
+    user: PageUser,
+    direction: Annotated[int, Form()] = 0,
+):
+    split = owned_split(db, user, split_id)
+    siblings = list(split.category.splits)
+    index = next(
+        (offset for offset, item in enumerate(siblings) if item.id == split.id), -1
+    )
+    target_index = index + direction
+    if index == -1 or not 0 <= target_index < len(siblings):
+        return RedirectResponse(f"/categories/{split.category_id}", status_code=303)
+
+    other = siblings[target_index]
+    split.position, other.position = other.position, split.position
+    db.commit()
+    return RedirectResponse(f"/categories/{split.category_id}", status_code=303)
+
+
+@app.post("/splits/{split_id}/delete", name="delete_split")
+def delete_split(
+    request: Request,
+    split_id: int,
+    db: SessionDep,
+    user: PageUser,
+):
+    split = owned_split(db, user, split_id)
+    category_id = split.category_id
+    name = split.name
+    db.delete(split)
+    db.flush()
+
+    remaining = db.scalars(
+        select(models.Split)
+        .where(models.Split.category_id == category_id)
+        .order_by(models.Split.position)
+    ).all()
+    for index, item in enumerate(remaining):
+        item.position = index
+
+    db.commit()
+    flash(request, f"{name} removed from the route.", "success")
+    return RedirectResponse(f"/categories/{category_id}", status_code=303)
 
 
 @app.exception_handler(AuthRequired)

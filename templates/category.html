@@ -47,9 +47,73 @@
     <span class="stat"><strong>{{ category.runs|length }}</strong> runs</span>
   </div>
 
-  <div class="empty-state" style="margin-top: 2rem">
-    <h2>No splits yet</h2>
-    <p>The split editor is the next piece. This page will hold the ordered route and the timer launch button.</p>
+  <div class="panel-form">
+    <h2>Add a split</h2>
+    <p class="muted">Splits run in this order. Targets are optional and cumulative.</p>
+    <form action="{{ url_for('create_split', category_id=category.id) }}" method="post" class="form-row">
+      <div class="field">
+        <label for="split-name">Split name</label>
+        <input id="split-name" name="name" maxlength="80" placeholder="Checkpoint 1" required>
+      </div>
+      <div class="field">
+        <label for="split-target">Target split <span class="muted">(optional)</span></label>
+        <input id="split-target" name="target" placeholder="01:42.018" autocomplete="off">
+      </div>
+      <button class="btn btn-primary" type="submit">Add split</button>
+    </form>
   </div>
+
+  {% if category.splits %}
+    <ol class="split-list">
+      {% for split in category.splits %}
+        {% set comparison_ms = comparison.splits.get(split.id|string) if comparison else none %}
+        <li class="split-row">
+          <span class="split-index">{{ "%02d"|format(loop.index) }}</span>
+          <div class="split-info">
+            <h3>{{ split.name }}</h3>
+            <p>
+              {% if split.target_ms is not none %}Target {{ split.target_ms|clock }}{% else %}No target set{% endif %}
+              {% if comparison_ms is not none %} · {{ comparison.label }} {{ comparison_ms|clock }}{% endif %}
+            </p>
+            <details class="split-edit">
+              <summary class="btn btn-ghost btn-sm">Edit split</summary>
+              <form action="{{ url_for('update_split', split_id=split.id) }}" method="post">
+                <div class="field">
+                  <label for="split-name-{{ split.id }}">Name</label>
+                  <input id="split-name-{{ split.id }}" name="name" value="{{ split.name }}" maxlength="80" required>
+                </div>
+                <div class="field">
+                  <label for="split-target-{{ split.id }}">Target</label>
+                  <input id="split-target-{{ split.id }}" name="target"
+                         value="{{ split.target_ms|clock if split.target_ms is not none else '' }}"
+                         placeholder="01:42.018" autocomplete="off">
+                </div>
+                <button class="btn btn-primary btn-sm" type="submit">Save split</button>
+              </form>
+            </details>
+          </div>
+          <div class="split-actions">
+            <form class="inline-form" action="{{ url_for('move_split', split_id=split.id) }}" method="post">
+              <input type="hidden" name="direction" value="-1">
+              <button class="icon-btn" type="submit" aria-label="Move {{ split.name }} up" {% if loop.first %}disabled{% endif %}>↑</button>
+            </form>
+            <form class="inline-form" action="{{ url_for('move_split', split_id=split.id) }}" method="post">
+              <input type="hidden" name="direction" value="1">
+              <button class="icon-btn" type="submit" aria-label="Move {{ split.name }} down" {% if loop.last %}disabled{% endif %}>↓</button>
+            </form>
+            <form class="inline-form" action="{{ url_for('delete_split', split_id=split.id) }}" method="post"
+                  data-confirm="Remove the {{ split.name }} split?">
+              <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+            </form>
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <div class="empty-state" style="margin-top: 2rem">
+      <h2>No splits yet</h2>
+      <p>Add the first split with the form above. The timer follows this order.</p>
+    </div>
+  {% endif %}
 </section>
 {% endblock %}

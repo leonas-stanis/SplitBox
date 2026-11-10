@@ -25,3 +25,35 @@ def format_date(value: datetime | None) -> str:
     if value is None:
         return "—"
     return value.strftime("%d %b %Y, %H:%M")
+
+
+def parse_time_input(value: str) -> int | None:
+    """Parse mm:ss.mmm, h:mm:ss.mmm or a plain seconds value."""
+    text = value.strip().replace(",", ".")
+    if not text:
+        return None
+
+    parts = text.split(":")
+    if len(parts) > 3:
+        return None
+
+    try:
+        seconds = float(parts.pop())
+    except ValueError:
+        return None
+    if seconds < 0:
+        return None
+
+    total = seconds
+    multiplier = 60
+    for part in reversed(parts):
+        try:
+            amount = float(part)
+        except ValueError:
+            return None
+        if amount < 0:
+            return None
+        total += amount * multiplier
+        multiplier *= 60
+
+    return int(round(total * 1000))
