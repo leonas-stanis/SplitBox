@@ -1,8 +1,13 @@
-{% extends "layout.html" %} {% block content %}
-<article class="content-section py-3 px-4 mb-4">
-  <h1>
-    <a class="article-title" href="#">Oops... {{ status_code }} Error</a>
-  </h1>
-  <p class="article-content">{{ message }}</p>
-</article>
-{% endblock content %}
+{% extends "layout.html" %}
+{% block title %}{{ status_code }} — SplitBox{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="empty-state">
+    <p class="eyebrow">{{ status_code }}</p>
+    <h1>{{ message or "Something went wrong" }}</h1>
+    <p>The page you asked for could not be loaded.</p>
+    <p><a class="btn btn-primary" href="/">Back to the start</a></p>
+  </div>
+</section>
+{% endblock %}

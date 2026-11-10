@@ -1,12 +1,11 @@
 [project]
-name = "fastapi-intro"
+name = "splitbox"
 version = "0.1.0"
-description = "Add your description here"
+description = "Hardware-backed speedrunning timer with a FastAPI frontend."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "aiosqlite>=0.22.1",
     "fastapi[standard]>=0.141.1",
+    "itsdangerous>=2.2.0",
     "sqlalchemy>=2.1.2",
-    "templating>=0.5.0",
 ]

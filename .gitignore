@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# App data and secrets
+splitbox.db
+*.db-journal
+.secret_key
+
+# Tooling and OS files
+node_modules/
+.DS_Store
+*.log

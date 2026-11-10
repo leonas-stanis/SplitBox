@@ -1,0 +1,99 @@
+{% extends "layout.html" %}
+{% block title %}SplitBox — Speedrunning timer{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <span class="eyebrow">DkIT Software Development · IoT 2026/27</span>
+    <h1>Split your runs.<br><em>Beat your best.</em></h1>
+    <p class="lead">
+      SplitBox is a hardware-backed speedrunning timer. Build a game library,
+      plan your splits, and time every attempt in the browser — with the
+      Raspberry Pi 5 deck and cloud sync coming next.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="/register">Create your account</a>
+      <a class="btn btn-ghost" href="/login">I already have one</a>
+    </div>
+    <div class="hero-meta">
+      <span>No install</span>
+      <span>·</span>
+      <span>FastAPI + SQLite</span>
+      <span>·</span>
+      <span>LiveSplit-style controls</span>
+    </div>
+  </div>
+
+  <div class="timer-preview" aria-hidden="true">
+    <div class="preview-top">
+      <span class="preview-game">Celeste · Any%</span>
+      <span class="preview-badge">PB 32:18.402</span>
+    </div>
+    <div class="preview-clock">00:41:12.873</div>
+    <div class="preview-meta">
+      <span>Split 4 of 8</span>
+      <span class="ahead">−00:02.184</span>
+    </div>
+    <div class="preview-splits">
+      <div class="preview-split done">
+        <span>Forsaken City</span><span>01:42.018</span>
+      </div>
+      <div class="preview-split done">
+        <span>Old Site</span><span>03:26.552</span>
+      </div>
+      <div class="preview-split done">
+        <span>Celestial Resort</span><span>09:11.340</span>
+      </div>
+      <div class="preview-split current">
+        <span>Golden Ridge</span><span>−00:02.184</span>
+      </div>
+      <div class="preview-split">
+        <span>Mirror Temple</span><span>—</span>
+      </div>
+    </div>
+    <div class="preview-controls">
+      <kbd>Space</kbd> start / split
+      <kbd>R</kbd> reset
+      <kbd>⌫</kbd> undo
+    </div>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <div class="section-head">
+    <span class="eyebrow">Built for the run</span>
+    <h2>Everything around the timer</h2>
+    <p class="text-dim">The web app is ready first. The API, MQTT transport and hardware deck slot in behind it.</p>
+  </div>
+
+  <div class="feature-grid">
+    <article class="feature-card">
+      <span class="feature-icon">01</span>
+      <h3>Game library</h3>
+      <p>Add the games you run and keep every category in one place.</p>
+    </article>
+    <article class="feature-card">
+      <span class="feature-icon">02</span>
+      <h3>Split routes</h3>
+      <p>Build, rename and reorder the splits that make up a category.</p>
+    </article>
+    <article class="feature-card">
+      <span class="feature-icon">03</span>
+      <h3>Live timer</h3>
+      <p>Start, split, undo and reset with pace comparisons against your PB.</p>
+    </article>
+    <article class="feature-card">
+      <span class="feature-icon">04</span>
+      <h3>Hardware hand-off</h3>
+      <p>Queue a category for the Pi 5 deck now; MQTT/TLS follows later.</p>
+    </article>
+  </div>
+
+  <div class="roadmap">
+    <span class="chip active">FastAPI web app · now</span>
+    <span class="chip">Pi 5 hand-off · template</span>
+    <span class="chip">MQTT over TLS · next</span>
+    <span class="chip">Cloud sync · next</span>
+  </div>
+</section>
+{% endblock %}
