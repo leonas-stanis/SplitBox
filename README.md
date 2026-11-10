@@ -4,7 +4,80 @@ A hardware-backed, cloud-connected speedrunning timer built for the DkIT Softwar
 
 ---
 
-## 1. System Architecture & Data Flow
+## 1. Web App Prototype (Current Milestone)
+
+The current build is a working FastAPI + SQLite web app. It covers the full
+single-user flow before the cloud and hardware stages are connected:
+
+- Register, sign in and keep a signed-cookie session.
+- Add games, then open a game page to create categories.
+- Build each category's ordered split route with optional target times.
+- Time attempts with a LiveSplit-style start / split / undo / reset timer.
+- Compare live pace against the personal best (or target splits).
+- Save completed runs, show PB badges and delete run history.
+- Queue a category for the Pi 5 with a template hand-off button.
+
+### Run it
+
+The app is managed with `uv`, matching the class setup:
+
+```bash
+uv sync
+uv run fastapi dev main.py
+```
+
+Open <http://127.0.0.1:8000>. `fastapi dev` reloads on file changes.
+
+On startup the app creates `splitbox.db` and, if `SECRET_KEY` is not set, a
+local `.secret_key` for signing session cookies. Both are ignored by git. The
+tables can also be created directly with:
+
+```bash
+uv run python init_db.py
+```
+
+### Main flow
+
+1. Create an account on `/register`.
+2. Add a game on the dashboard — the whole game card opens its page.
+3. Add a category on the game page — it opens the category page.
+4. Add the ordered splits on the category page.
+5. Click **Open timer**, then **Send to Pi 5** when you are ready to hand off.
+
+### Timer shortcuts
+
+| Key | Action |
+| :-- | :-- |
+| `Space` | Start the attempt / record the next split |
+| `Backspace` | Undo the last split |
+| `R` | Reset the current attempt |
+
+### Pi 5 hand-off (template)
+
+The **Send to Pi 5** button on the category and timer pages calls
+`POST /api/categories/{id}/send-to-pi`. For now the endpoint returns the
+category payload and logs it to the server console. It is the seam for the MQTT
+over TLS publisher that will drive the Raspberry Pi 5 deck.
+
+### Project layout
+
+```text
+main.py              # FastAPI routes for pages and JSON endpoints
+auth.py              # session-backed current-user dependencies
+security.py          # PBKDF2 password hashing and local secret handling
+database.py          # SQLite engine, session factory and Base
+models.py            # User / Game / Category / Split / Run / RunSplit
+schemas.py           # run-save and Pi 5 payload schemas
+formatters.py        # clock, delta and target-time parsing
+database/schema.sql  # generated SQLite schema
+init_db.py           # create the database from the models
+templates/           # Jinja pages (landing, auth, library, game, category, timer)
+static/              # SplitBox styles and timer JavaScript
+```
+
+---
+
+## 2. System Architecture & Data Flow
 
 ```
                                 [ AWS Cloud Infrastructure ]
@@ -34,7 +107,7 @@ A hardware-backed, cloud-connected speedrunning timer built for the DkIT Softwar
 
 ---
 
-## 2. Bill of Materials (Zero-Solder Hardware Setup)
+## 3. Bill of Materials (Zero-Solder Hardware Setup)
 
 | Component | Specification | Interface & Wiring Method |
 | :--- | :--- | :--- |
@@ -46,7 +119,7 @@ A hardware-backed, cloud-connected speedrunning timer built for the DkIT Softwar
 
 ---
 
-## 3. Prototype Hardware Pin & Interface Mapping Guide
+## 4. Prototype Hardware Pin & Interface Mapping Guide
 
 ### Display Interface Mapping (Waveshare 2.4" TFT SPI)
 
@@ -71,11 +144,21 @@ A hardware-backed, cloud-connected speedrunning timer built for the DkIT Softwar
 
 ---
 
-## 4. Security Architecture
+## 5. Security Architecture
 
 - **Data in Transit:** All HTTP traffic will be enforced via TLS 1.3 / HTTPS through Nginx on AWS. IoT-to-server messaging will be strictly encrypted using MQTT over TLS (Port 8883) with mutual certificate verification.
-- **Data at Rest:** Database storage will use encrypted volumes, hashed user credentials (`bcrypt`), and parameterized queries to prevent SQL injection.
+- **Data at Rest:** The prototype stores salted PBKDF2-SHA256 password hashes and parameterized SQLAlchemy queries. The target deployment moves to encrypted PostgreSQL volumes.
 - **Device & Channel Access:** MQTT brokers enforce strict Access Control Lists (ACLs) per client ID. API endpoints require JWT authentication.
-- **Secret Management:** All API keys, database URLs, and MQTT credentials are stored in environment variables (`.env`) and excluded via `.gitignore`. No default configurations or hardcoded secrets will be used.
+- **Secret Management:** `SECRET_KEY` is read from the environment when provided; locally, a one-time `.secret_key` is generated and ignored by git. Future API keys, database URLs and MQTT credentials stay in environment variables (`.env`).
 
 ---
+
+---
+
+## 6. Roadmap
+
+- Replace the SQLite prototype store with the encrypted PostgreSQL target.
+- Move the Pi 5 hand-off from the template endpoint to MQTT over TLS with ACLs.
+- Add JWT/API authentication for the device and future cloud clients.
+- Mirror the live timer state on the Waveshare SPI display.
+- Add multi-user run comparison and cloud-backed personal bests.
