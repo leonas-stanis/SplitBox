@@ -19,7 +19,9 @@
     </div>
     <div class="page-head-actions">
       <a class="btn btn-ghost" href="{{ url_for('game_page', game_id=category.game.id) }}">Back to game</a>
+      <button class="btn btn-ghost" type="button" data-send-pi="{{ category.id }}">Send to Pi 5</button>
       <a class="btn btn-primary" href="{{ url_for('timer_page', category_id=category.id) }}">Open timer</a>
+      <span class="pi-status" data-pi-status></span>
     </div>
   </header>
 

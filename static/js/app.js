@@ -31,3 +31,31 @@ document.addEventListener("submit", (event) => {
     event.preventDefault();
   }
 });
+
+
+document.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-send-pi]");
+  if (!button) return;
+
+  const status = document.querySelector("[data-pi-status]");
+  button.disabled = true;
+  if (status) status.textContent = "Queueing category…";
+
+  try {
+    const response = await fetch(
+      `/api/categories/${button.dataset.sendPi}/send-to-pi`,
+      { method: "POST" },
+    );
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(body.detail || "Could not queue the category.");
+    }
+    if (status) status.textContent = body.message;
+    showToast(body.message, "success", 4_500);
+  } catch (error) {
+    if (status) status.textContent = error.message;
+    showToast(error.message, "error", 5_000);
+  } finally {
+    button.disabled = false;
+  }
+});

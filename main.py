@@ -1,3 +1,4 @@
+import logging
 import re
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -19,6 +20,8 @@ from formatters import format_clock, format_date, format_delta, parse_time_input
 from security import get_secret_key, hash_password, verify_password
 import models
 import schemas
+
+logger = logging.getLogger("splitbox.pi5")
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -618,6 +621,37 @@ def timer_page(
         user=user,
         category=category,
         timer_data=timer_data,
+    )
+
+
+@app.post(
+    "/api/categories/{category_id}/send-to-pi",
+    name="send_to_pi",
+    response_model=schemas.Pi5QueueResponse,
+)
+def send_to_pi(category_id: int, db: SessionDep, user: ApiUser):
+    category = owned_category(db, user, category_id)
+    payload = schemas.Pi5Payload(
+        category_id=category.id,
+        category_name=category.name,
+        game_name=category.game.name,
+        splits=[
+            schemas.Pi5Split(
+                id=split.id,
+                name=split.name,
+                target_ms=split.target_ms,
+            )
+            for split in category.splits
+        ],
+    )
+    logger.info("Queued category %s for Pi 5: %s", category.id, payload.model_dump())
+    return schemas.Pi5QueueResponse(
+        status="queued",
+        message=(
+            f"{category.name} queued for the Pi 5 hand-off "
+            "(template transport — hardware not connected yet)."
+        ),
+        payload=payload,
     )
 
 

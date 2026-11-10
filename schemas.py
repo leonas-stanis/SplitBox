@@ -28,3 +28,22 @@ class RunSaved(BaseModel):
     previous_pb_ms: int | None = None
     comparison: dict | None = None
     best_segments: dict[str, int] = Field(default_factory=dict)
+
+
+class Pi5Split(BaseModel):
+    id: int
+    name: str
+    target_ms: int | None = None
+
+
+class Pi5Payload(BaseModel):
+    category_id: int
+    category_name: str
+    game_name: str
+    splits: list[Pi5Split]
+
+
+class Pi5QueueResponse(BaseModel):
+    status: str
+    message: str
+    payload: Pi5Payload
