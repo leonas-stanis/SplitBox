@@ -2,7 +2,7 @@
 {% block title %}{{ game.name }} — SplitBox{% endblock %}
 
 {% block content %}
-<section class="section">
+<section class="section window" data-title="{{ game.name }}">
   <nav class="breadcrumb" aria-label="Breadcrumb">
     <a href="{{ url_for('dashboard') }}">Library</a>
     <span aria-hidden="true">/</span>

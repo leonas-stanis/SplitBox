@@ -2,7 +2,7 @@
 {% block title %}SplitBox — Speedrunning timer{% endblock %}
 
 {% block content %}
-<section class="hero">
+<section class="hero window" data-title="SplitBox">
   <div class="hero-copy">
     <span class="eyebrow">DkIT Software Development · IoT 2026/27</span>
     <h1>Split your runs.<br><em>Beat your best.</em></h1>
@@ -16,7 +16,7 @@
       <a class="btn btn-ghost" href="/login">I already have one</a>
     </div>
     <div class="hero-meta">
-      <span>No install</span>
+      <span>UV-powered</span>
       <span>·</span>
       <span>FastAPI + SQLite</span>
       <span>·</span>
@@ -24,7 +24,7 @@
     </div>
   </div>
 
-  <div class="timer-preview" aria-hidden="true">
+  <div class="timer-preview window" data-title="Run Monitor" aria-hidden="true">
     <div class="preview-top">
       <span class="preview-game">Celeste · Any%</span>
       <span class="preview-badge">PB 32:18.402</span>
@@ -59,7 +59,7 @@
   </div>
 </section>
 
-<section class="section" id="features">
+<section class="section window" id="features" data-title="Read Me">
   <div class="section-head">
     <span class="eyebrow">Built for the run</span>
     <h2>Everything around the timer</h2>

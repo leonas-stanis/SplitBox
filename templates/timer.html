@@ -2,7 +2,7 @@
 {% block title %}{{ category.name }} timer — SplitBox{% endblock %}
 
 {% block content %}
-<section class="section">
+<section class="section window" data-title="Timer - {{ category.name }}">
   <nav class="breadcrumb" aria-label="Breadcrumb">
     <a href="{{ url_for('dashboard') }}">Library</a>
     <span aria-hidden="true">/</span>
@@ -35,7 +35,7 @@
   </noscript>
 
   <div class="timer-stage">
-    <div class="timer-main" data-state="idle">
+    <div class="timer-main window" data-state="idle" data-title="Timer">
       <div class="timer-status">
         <span class="status-pill"><span class="status-dot"></span><span data-status aria-live="polite">Ready</span></span>
         <span data-comparison></span>
