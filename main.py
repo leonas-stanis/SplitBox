@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -43,7 +44,7 @@ app.add_middleware(
     SessionMiddleware,
     secret_key=get_secret_key(),
     same_site="lax",
-    https_only=False,
+    https_only=os.environ.get("COOKIE_SECURE", "0") == "1",
 )
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 

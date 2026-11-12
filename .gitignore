@@ -9,6 +9,7 @@ venv/
 splitbox.db
 *.db-journal
 .secret_key
+SplitBox-Pair-Key.pem
 
 # Tooling and OS files
 node_modules/
