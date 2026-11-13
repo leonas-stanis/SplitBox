@@ -4,11 +4,30 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="SplitBox is a hardware-backed speedrunning timer for the DkIT Software Development IoT module.">
-    <meta name="theme-color" content="#b6b6b6">
+    <meta name="theme-color" content="#f7f0e1">
     <title>{% block title %}SplitBox — Speedrunning timer{% endblock %}</title>
 
-    <link rel="icon" href="{{ url_for('static', path='icons/favicon.ico') }}" sizes="any">
-    <link rel="icon" href="{{ url_for('static', path='icons/icon.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ url_for('static', path='icons/splitbox-icon.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ url_for('static', path='icons/splitbox-icon-32.png') }}" sizes="32x32" type="image/png">
+    <link rel="icon" href="{{ url_for('static', path='icons/splitbox-favicon.ico') }}" sizes="any">
+    <link rel="apple-touch-icon" href="{{ url_for('static', path='icons/splitbox-icon-180.png') }}">
+    <link rel="manifest" href="{{ url_for('static', path='site.webmanifest') }}">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="SplitBox">
+    <meta property="og:title" content="SplitBox — Speedrunning timer">
+    <meta property="og:description" content="A hardware-backed speedrunning timer with games, categories, split routes and personal bests. Built for the DkIT Software Development IoT module.">
+    <meta property="og:url" content="https://splitboxtimer.fit/">
+    <meta property="og:image" content="https://splitboxtimer.fit/static/icons/splitbox-banner.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="SplitBox classic Macintosh-style banner">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SplitBox — Speedrunning timer">
+    <meta name="twitter:description" content="A hardware-backed speedrunning timer with games, categories, split routes and personal bests.">
+    <meta name="twitter:image" content="https://splitboxtimer.fit/static/icons/splitbox-banner.png">
+    <link rel="canonical" href="https://splitboxtimer.fit/">
+
     <link rel="stylesheet" href="{{ url_for('static', path='css/main.css') }}">
     {% block head %}{% endblock %}
   </head>

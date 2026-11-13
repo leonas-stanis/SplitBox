@@ -1,35 +1,29 @@
 {
-  "name": "FastAPI Blog",
-  "short_name": "FastAPI Blog",
-  "description": "FastAPI Tutorial",
+  "name": "SplitBox",
+  "short_name": "SplitBox",
+  "description": "A hardware-backed speedrunning timer with games, categories, split routes and personal bests.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#527c9f",
+  "background_color": "#cbbfa9",
+  "theme_color": "#f7f0e1",
   "icons": [
     {
-      "src": "/static/icons/icon.png",
-      "sizes": "180x180",
+      "src": "/static/icons/splitbox-icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/static/icons/icon.svg",
+      "src": "/static/icons/splitbox-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/splitbox-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
-    },
-    {
-      "src": "/static/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/static/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
     }
   ]
 }

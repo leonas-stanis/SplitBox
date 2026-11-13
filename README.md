@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="static/icons/splitbox-banner.png" alt="SplitBox — hardware-backed speedrunning timer" width="100%">
+</p>
+
 # SplitBox: IoT Speedrunning & Session Timer
 
 A hardware-backed, cloud-connected speedrunning timer built for the DkIT Software Development IoT module (2026-27). This project pairs a Raspberry Pi 5 with a simplified arcade-style dual-button control deck and an SPI display, communicating securely via MQTT over TLS with a FastAPI cloud backend hosted on AWS.
